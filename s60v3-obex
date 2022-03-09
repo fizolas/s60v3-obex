@@ -1,0 +1,43 @@
+#!/bin/bash
+
+if [ $# -lt 1 ]; then 
+    echo "Give as a parameter the bluetooth name of the (paired) phone whose filesystem you wish to mount using obexfs"; exit 
+fi
+
+function deactivate_bt() {
+    echo ""
+    echo "Deactivating bluetooth"
+    sudo rfkill block bluetooth
+    exit
+
+}
+
+# umount in case it was previously mounted...
+fusermount -u "/media/$1" &> /dev/null
+echo -n "Getting bluetooth address of $1: "
+tmp=$(bluetoothctl paired-devices|grep $1)
+tmp=${tmp#Device }
+if [ "$tmp" == "" ]
+then 
+    echo "device not paired"
+    exit
+fi
+bt_address=${tmp%" $1"}
+echo $bt_address
+trap deactivate_bt SIGINT
+echo "Activating bluetooth"
+sudo rfkill unblock bluetooth 
+echo -n "Getting OBEX FTP channel: " 
+bt_channel=""
+while [ "$bt_channel" == "" ]; do
+    tmp=$(sdptool search --bdaddr "$bt_address" FTP|grep Channel) 
+    bt_channel=${tmp#*: } 
+done
+echo $bt_channel
+sudo rmdir "/media/$1" &> /dev/null
+sudo mkdir "/media/$1"
+mise=`whoami`
+sudo chown "$mise":"$mise" "/media/$1"
+echo "Mounting $1's filesystem at /media/$1"
+echo "(umount through nautilus, or else \"fusermount -u /media/$1\")" 
+obexfs -b "$bt_address" -B "$bt_channel" "/media/$1"
