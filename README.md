@@ -1,5 +1,5 @@
 # s60v3-obex
-Mount filesystem of s60v3 phone through bluetooth in Debian 11 (bullseye)
+Mount filesystem of s60v3 phone through bluetooth in Debian 12 (bookworm)
 
 Put the s60v3-obex script in ~/bin or some other directory in the path, and make it executable (chmod +x s60v3-obex)
 
